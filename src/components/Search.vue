@@ -2,7 +2,7 @@
   <div class="searchDiv">
     <a-input-search 
     placeholder="输入搜索内容" 
-    style="width: 400px;height: 50px" 
+    style="width: 25%;height: 50px" 
     @search="onSearch" 
     class="searchInput" />
   </div>
@@ -21,10 +21,11 @@ export default {
 .searchDiv {
     position: absolute;
     height: 50%;
-    left:0;
-    top: 0;
-    bottom: 0;
-    right: 0;
+    top: 0px;
+    bottom: 0px;
+    left:2%;
+    right: 2%;
     margin: auto;
+    padding: 0;
 }
 </style>
