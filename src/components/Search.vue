@@ -1,11 +1,9 @@
 <template>
-  <div class="searchDiv">
-    <a-input-search 
-    placeholder="输入搜索内容" 
-    style="width: 25%;height: 50px" 
-    @search="onSearch" 
-    class="searchInput" />
-  </div>
+  <a-input-search
+    placeholder="输入搜索内容"
+    @search="onSearch"
+    class="searchInput"
+  />
 </template>
 
 <script>
@@ -18,14 +16,14 @@ export default {
 </script>
 
 <style scope>
-.searchDiv {
-    position: absolute;
-    height: 50%;
-    top: 0px;
-    bottom: 0px;
-    left:2%;
-    right: 2%;
-    margin: auto;
-    padding: 0;
+.searchInput {
+  position: absolute;
+  height: 50px;
+  width: 25%;
+  top: 30%;
+  left: 5%;
+  right: 5%;
+  margin: auto;
+  padding: 0;
 }
 </style>
