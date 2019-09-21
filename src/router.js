@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import Home from './views/Home.vue'
+import SearchResult from './views/SearchResult.vue'
 
 Vue.use(Router)
 
@@ -10,13 +11,18 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'home',
+      name: 'Home',
       component: Home,
       children: [{
         path: '',
         name: 'search',
-        component: () => import(/* webpackChunkName: "about" */ './components/Search.vue')
+        component: () => import(/* webpackChunkName: "about" */ './components/Home/Search.vue')
       }]
+    },
+    {
+      path: '/searchResult',
+      name: 'SearchResult',
+      component: SearchResult
     }
   ]
 })
