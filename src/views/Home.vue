@@ -1,7 +1,7 @@
 <template>
   <div>
-    <a-row type="flex" justify="center" align="middle" id="col-search">
-      <a-col :xs="18" :sm="16" :md="12" :lg="8" :xl="6">
+    <a-row type="flex" justify="center">
+      <a-col :xs="18" :sm="16" :md="12" :lg="8" :xl="6" id="col-search">
         <router-view></router-view>
       </a-col>
     </a-row>
@@ -23,6 +23,6 @@ export default {
 
 <style scoped>
 #col-search{
-  margin-top: 10%;
+  margin-top: calc(30vh);
 }
 </style>

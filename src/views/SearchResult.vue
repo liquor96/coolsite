@@ -1,13 +1,16 @@
 
 <template>
   <a-tabs @change="callback" type="card">
-    <a-tab-pane tab="百度" key="1">
+    <a-tab-pane tab="多吉搜索" key="1">
+      <iframe :src="dogeUrl" frameborder="0" class="iframecotainer"></iframe>
+    </a-tab-pane>
+    <a-tab-pane tab="百度" key="2">
       <iframe :src="baiduUrl" frameborder="0" class="iframecotainer"></iframe>
     </a-tab-pane>
-    <a-tab-pane tab="谷歌" key="2">
+    <a-tab-pane tab="谷歌" key="3">
       <iframe :src="googleUrl" frameborder="0" class="iframecotainer"></iframe>
     </a-tab-pane>
-    <a-tab-pane tab="必应" key="3">
+    <a-tab-pane tab="必应" key="4">
       <iframe :src="bingUrl" frameborder="0" class="iframecotainer"></iframe>
     </a-tab-pane>
   </a-tabs>
@@ -20,6 +23,7 @@ export default {
       baiduUrl: "https://www.baidu.com/s?wd=" + this.$route.query.q,
       bingUrl: "https://cn.bing.com/search?q=" + this.$route.query.q,
       googleUrl: "https://g.lijianm.in/search?q=" + this.$route.query.q,
+      dogeUrl: "https://www.dogedoge.com/results?q=" + this.$route.query.q,
     };
   },
   methods: {
