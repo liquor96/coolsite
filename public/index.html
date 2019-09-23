@@ -6,12 +6,287 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <link rel="icon" href="<%= BASE_URL %>favicon.ico">
     <title>方便搜索-CoolSite</title>
+
+    <script src="three.min.js"></script>
+    <script src="OrbitControls.js"></script>
+    <style type="text/css">
+      body {
+          margin: 0;
+          overflow: hidden
+      }
+      #webglcontainer{
+          position: absolute;
+      }
+    </style>
+
   </head>
   <body>
+    <div id="webglcontainer"></div>
     <noscript>
       <strong>We're sorry but coolsite doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
     </noscript>
     <div id="app"></div>
     <!-- built files will be auto injected -->
   </body>
+  <!-- 顶点着色器 -->
+  <script id="vertex-shader" type="x-shader/x-vertex">
+    //varying float a_position_x;
+    void main(){
+        //a_position_x = position.x;
+        gl_PointSize = 1.0;
+        gl_Position =  projectionMatrix * modelViewMatrix * vec4(position,1.0);
+    }
+</script>
+<!-- 片元着色器 -->
+<script id="fragment-shader" type="x-shader/x-vertex">
+    //varying float a_position_x;
+    uniform vec3 a_Color;
+    void main(){
+        //float color_ = (a_position_x*0.05 + float(25));
+        //float color_r = 0.0;
+        //float color_g = (float(98))/float(255);
+        //float color_b = (float(149))/float(255);
+        //gl_FragColor = vec4(color_r,color_g,color_b,1.0);
+        gl_FragColor = vec4(a_Color,1.0);
+    }
+</script>
+<script type="text/javascript">
+    function init() {
+        var scene, camera, renderer, light, controls;
+        var clock = new THREE.Clock();
+        THREE.Cache.enabled = true;
+
+        //模型
+
+        drawScene();
+
+        function drawScene() {
+            iniScene();
+            iniLight();
+            initModel();
+            orbitControls();
+            iniMap();
+            render();
+        }
+        //场景
+        function iniScene() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer();
+            camera.position.set(0, 0, 300);
+            camera.lookAt(scene.position);
+            renderer.setClearColor(0x000000);
+            renderer.shadowMap.enabled = true;
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById("webglcontainer").appendChild(renderer.domElement);
+        }
+
+        //灯光
+        function iniLight() {
+            light = new THREE.AmbientLight();
+            scene.add(light);
+
+            light = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
+            light.position.set(0, 200, 0);
+            scene.add(light);
+        }
+
+        function createGeometryArray(json) {
+            var geometry_array = [];
+
+            if (json.type == 'Feature') {
+                geometry_array.push(json.geometry);
+            } else if (json.type == 'FeatureCollection') {
+                for (var feature_num = 0; feature_num < json.features.length; feature_num++) {
+                    geometry_array.push(json.features[feature_num].geometry);
+                }
+            } else if (json.type == 'GeometryCollection') {
+                for (var geom_num = 0; geom_num < json.geometries.length; geom_num++) {
+                    geometry_array.push(json.geometries[geom_num]);
+                }
+            } else {
+                throw new Error('无效的geoJSON！');
+            }
+
+            return geometry_array;
+        }
+
+        function createCoordinateArray(feature) {
+            //Loop through the coordinates and figure out if the points need interpolation.
+            var temp_array = [];
+            var interpolation_array = [];
+
+            for (var point_num = 0; point_num < feature.length; point_num++) {
+                var point1 = feature[point_num];
+                var point2 = feature[point_num - 1];
+
+                if (point_num > 0) {
+                    if (needsInterpolation(point2, point1)) {
+                        interpolation_array = [point2, point1];
+                        interpolation_array = interpolatePoints(interpolation_array);
+
+                        for (var inter_point_num = 0; inter_point_num < interpolation_array.length; inter_point_num++) {
+                            temp_array.push(interpolation_array[inter_point_num]);
+                        }
+                    } else {
+                        temp_array.push(point1);
+                    }
+                } else {
+                    temp_array.push(point1);
+                }
+            }
+            return temp_array;
+        }
+
+        function needsInterpolation(point2, point1) {
+            //If the distance between two latitude and longitude values is
+            //greater than five degrees, return true.
+            var lon1 = point1[0];
+            var lat1 = point1[1];
+            var lon2 = point2[0];
+            var lat2 = point2[1];
+            var lon_distance = Math.abs(lon1 - lon2);
+            var lat_distance = Math.abs(lat1 - lat2);
+
+            if (lon_distance > 0.2 || lat_distance > 0.2) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        function interpolatePoints(interpolation_array) {
+            //This function is recursive. It will continue to add midpoints to the
+            //interpolation array until needsInterpolation() returns false.
+            var temp_array = [];
+            var point1, point2;
+
+            for (var point_num = 0; point_num < interpolation_array.length - 1; point_num++) {
+                point1 = interpolation_array[point_num];
+                point2 = interpolation_array[point_num + 1];
+
+                if (needsInterpolation(point2, point1)) {
+                    temp_array.push(point1);
+                    temp_array.push(getMidpoint(point1, point2));
+                } else {
+                    temp_array.push(point1);
+                }
+            }
+
+            temp_array.push(interpolation_array[interpolation_array.length - 1]);
+
+            if (temp_array.length > interpolation_array.length) {
+                temp_array = interpolatePoints(temp_array);
+            } else {
+                return temp_array;
+            }
+            return temp_array;
+        }
+
+        function getMidpoint(point1, point2) {
+            var midpoint_lon = (point1[0] + point2[0]) / 2;
+            var midpoint_lat = (point1[1] + point2[1]) / 2;
+            var midpoint = [midpoint_lon, midpoint_lat];
+
+            return midpoint;
+        }
+
+        function lglt2xyz(longitude, latitude, radius) {
+            var lg = THREE.Math.degToRad(longitude), lt = THREE.Math.degToRad(latitude);
+            var y = radius * Math.sin(lt);
+            var temp = radius * Math.cos(lt);
+            var x = temp * Math.sin(lg);
+            var z = temp * Math.cos(lg);
+            return new THREE.Vector3(x, y, z)
+        }
+
+
+        //画地图
+        function drawMap(coordinates) {
+            var p = createCoordinateArray(coordinates)
+            var points = [];
+            p.forEach(function (val) {
+                points.push(lglt2xyz(val[0], val[1], 100));
+            })
+            var geometry = new THREE.Geometry();
+            geometry.vertices = points;
+            var material = new THREE.ShaderMaterial({
+                uniforms: {
+                    a_Color: { type: 'c', value: new THREE.Vector3(Math.random(), Math.random(), Math.random()) },
+                },
+                vertexShader: document.getElementById("vertex-shader").textContent,
+                fragmentShader: document.getElementById("fragment-shader").textContent,
+            });
+            var pointcloud = new THREE.Points(geometry, material)
+            scene.add(pointcloud);
+        }
+
+        //地图
+        //https://github.com/jdomingu/ThreeGeoJSON/blob/master/lib/threeGeoJSON.js
+        function iniMap() {
+            var loader = new THREE.FileLoader();
+            loader.load("world.json", function (data) {
+                provinceData = createGeometryArray(JSON.parse(data));
+                for (let province_id = 0; province_id < provinceData.length; province_id++) {
+                    if (provinceData[province_id].type == 'Polygon') {
+                        for (let index = 0; index < provinceData[province_id].coordinates.length; index++) {
+                            drawMap(provinceData[province_id].coordinates[index])
+                        }
+                    } else if (provinceData[province_id].type == 'MultiPolygon') {
+                        for (let index = 0; index < provinceData[province_id].coordinates.length; index++) {
+                            for (let coordIndex = 0; coordIndex < provinceData[province_id].coordinates[index].length; coordIndex++) {
+                                drawMap(provinceData[province_id].coordinates[index][coordIndex]);
+                            }
+                        }
+                    }
+
+                }
+
+            });
+
+        }
+
+        function initModel() {
+            //地球
+            var geometry = new THREE.SphereGeometry(100, 16, 16);
+            var material = new THREE.MeshBasicMaterial({
+                transparent: true,
+                opacity: 0.05,
+                wireframe: true
+            });
+            var sphere = new THREE.Mesh(geometry, material);
+            scene.add(sphere);
+        }
+
+        //相机轨道控制器
+        function orbitControls() {
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            //自转
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 0.8;
+            //阻尼 阻尼系数
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.4;
+            //缩放
+            controls.enableZoom = true;
+            controls.minDistance = 5;
+            controls.maxDistance = 1000;
+            //右键拖拽
+            controls.enablePan = true;
+        }
+
+        //渲染动画
+        function render() {
+
+            requestAnimationFrame(render);
+            renderer.render(scene, camera);
+            controls.update(clock.getDelta());
+        }
+
+    }
+
+    window.onload = init;
+
+</script>
 </html>
