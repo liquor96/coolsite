@@ -10,11 +10,11 @@
     
 </body>
 <script>
-    function loadShaderFromFile(path) {
+function loadShaderFromFile(path) {
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.open("GET", path, false);
     xmlhttp.send();
-    return xmlhttp.responseText;
+    return xmlhttp.responseText.replace(/[\r\n]/g,"");
 }
 </script>
 </html>

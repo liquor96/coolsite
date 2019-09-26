@@ -1,5 +1,6 @@
 import * as THREE from '../../Core/three.module';
-import loadShaderFromFile from '../../Helpers/ajax';
+import vert from './shader/vert'
+import frag from './shader/frag'
 
 /**
  * CubeMaterial class
@@ -12,8 +13,8 @@ class CubeMaterial extends THREE.ShaderMaterial {
   constructor(options) {
     super(options);
 
-    this.vertexShader = loadShaderFromFile('./shader/vert.glsl');
-    // this.fragmentShader = loadShaderFromFile('./shader/frag.glsl');
+    this.vertexShader = vert;
+    this.fragmentShader = frag;
     this.extensions.derivatives = true;
 
     this.uniforms = {
